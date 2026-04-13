@@ -1,0 +1,14 @@
+*.vvp
+*.vcd
+*.lxt
+*.fst
+__pycache__/
+*.pyc
+.pytest_cache/
+*.jou
+*.log
+.Xil/
+vivado_*.str
+.vscode/
+*.swp
+*~
