@@ -11,7 +11,7 @@ import os
 import sys
 
 N         = 4
-NUM_TESTS = 3
+NUM_TESTS = 10
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RTL_DIR    = os.path.join(SCRIPT_DIR, "..", "rtl")
 ARRAY_V    = os.path.join(RTL_DIR, "systolic_array.v")
@@ -120,38 +120,60 @@ def parse_output(stdout):
     return C
 
 
+def run_test(label, total, A, B, passes):
+    """Tek bir test çalıştırır; güncel passes sayacını döndürür."""
+    C_ref = A.astype(np.int64) @ B.astype(np.int64)
+    try:
+        stdout = run_sim(A, B)
+        C_sim  = parse_output(stdout)
+    except RuntimeError as e:
+        print(f"{label}/{total}: SIM HATASI — {e}")
+        return passes
+
+    if np.array_equal(C_sim, C_ref):
+        print(f"{label}/{total}: PASS")
+        return passes + 1
+    else:
+        print(f"{label}/{total}: FAIL")
+        for i in range(N):
+            for j in range(N):
+                if C_sim[i, j] != C_ref[i, j]:
+                    print(f"  C[{i}][{j}]: sim={C_sim[i,j]}  numpy={C_ref[i,j]}")
+        return passes
+
+
 def main():
     np.random.seed(42)
     passes = 0
+    TOTAL = NUM_TESTS + 3  # 10 rastgele + 3 edge case
 
+    # --- 10 rastgele matris ---
     for trial in range(1, NUM_TESTS + 1):
         A = np.random.randint(0, 256, (N, N), dtype=np.uint8)
         B = np.random.randint(0, 256, (N, N), dtype=np.uint8)
-        C_ref = A.astype(np.int64) @ B.astype(np.int64)
+        passes = run_test(f"Test {trial:02d}", TOTAL, A, B, passes)
 
-        try:
-            stdout  = run_sim(A, B)
-            C_sim   = parse_output(stdout)
-        except RuntimeError as e:
-            print(f"Test {trial}/{NUM_TESTS}: SIM HATASI — {e}")
-            continue
+    # --- Edge case 1: sıfır matrisi ---
+    A = np.zeros((N, N), dtype=np.uint8)
+    B = np.zeros((N, N), dtype=np.uint8)
+    passes = run_test(f"Edge sıfır  ", TOTAL, A, B, passes)
 
-        if np.array_equal(C_sim, C_ref):
-            print(f"Test {trial}/{NUM_TESTS}: PASS")
-            passes += 1
-        else:
-            print(f"Test {trial}/{NUM_TESTS}: FAIL")
-            for i in range(N):
-                for j in range(N):
-                    if C_sim[i, j] != C_ref[i, j]:
-                        print(f"  C[{i}][{j}]: sim={C_sim[i,j]}  numpy={C_ref[i,j]}")
+    # --- Edge case 2: tüm-255 matrisi ---
+    A = np.full((N, N), 255, dtype=np.uint8)
+    B = np.full((N, N), 255, dtype=np.uint8)
+    passes = run_test(f"Edge tüm-255", TOTAL, A, B, passes)
+
+    # --- Edge case 3: kimlik × rastgele ---
+    A = np.eye(N, dtype=np.uint8)
+    B = np.random.randint(0, 256, (N, N), dtype=np.uint8)
+    passes = run_test(f"Edge I×rand ", TOTAL, A, B, passes)
 
     print()
-    if passes == NUM_TESTS:
-        print(f"PASS: {passes}/{NUM_TESTS} test NumPy ile tam uyumlu")
+    if passes == TOTAL:
+        print(f"PASS: {passes}/{TOTAL} test NumPy ile tam uyumlu")
     else:
-        print(f"FAIL: {passes}/{NUM_TESTS} test gecti")
-    sys.exit(0 if passes == NUM_TESTS else 1)
+        print(f"FAIL: {passes}/{TOTAL} test gecti")
+    sys.exit(0 if passes == TOTAL else 1)
 
 
 if __name__ == "__main__":
