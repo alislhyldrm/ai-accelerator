@@ -10,7 +10,7 @@
 //   Çevrim 8   : IDLE, done=1  ← pulse burada
 //   Çevrim 9   : IDLE, done=0
 //
-// Toplam: 2 × (7 skew + 2 done) = 18 kontrol
+// Toplam: 4 × (7 skew + 2 done) = 36 kontrol
 //
 // Beklenen — Preset 0 (I4×I4, köşegen skew):
 //   t=0: a=00000001 b=00000001
@@ -187,6 +187,70 @@ module tb_input_seq;
         check_done_sig(1, 17);  // done pulse
         @(posedge clk); #1;
         check_done_sig(0, 18);  // done geri 0
+
+        do_reset;
+
+        // ============================================================
+        // SENARYO 3: Preset 2 — A=Fibonacci, B=I4
+        //   A=[[1,1,2,3],[5,8,13,21],[1,2,3,5],[8,13,21,34]], B=I4
+        //   13=0x0D, 21=0x15, 34=0x22
+        // ============================================================
+        $display("--- Senaryo 3: Preset 2 (A=Fibonacci, B=I4) ---");
+        sw = 2'd2;
+
+        send_start;
+        check_ab(32'h00000001, 32'h00000001, 19); // t=0: A[0][0]=1
+        @(posedge clk); #1;
+        check_ab(32'h00000501, 32'h00000000, 20); // t=1: A[0][1]=1,A[1][0]=5
+        @(posedge clk); #1;
+        check_ab(32'h00010802, 32'h00000100, 21); // t=2: A[0][2]=2,A[1][1]=8,A[2][0]=1
+        @(posedge clk); #1;
+        check_ab(32'h08020D03, 32'h00000000, 22); // t=3: A[0][3]=3,A[1][2]=13,A[2][1]=2,A[3][0]=8
+        @(posedge clk); #1;
+        check_ab(32'h0D031500, 32'h00010000, 23); // t=4: A[1][3]=21,A[2][2]=3,A[3][1]=13
+        @(posedge clk); #1;
+        check_ab(32'h15050000, 32'h00000000, 24); // t=5: A[2][3]=5,A[3][2]=21
+        @(posedge clk); #1;
+        check_ab(32'h22000000, 32'h01000000, 25); // t=6: A[3][3]=34
+
+        @(posedge clk); #1;
+        @(posedge clk); #1;
+        check_done_sig(1, 26);
+        @(posedge clk); #1;
+        check_done_sig(0, 27);
+
+        do_reset;
+
+        // ============================================================
+        // SENARYO 4: Preset 3 — A=döngüsel, B=döngüsel
+        //   A=[[1,1,1,1],[2,2,2,2],[3,3,3,3],[4,4,4,4]]
+        //   B=[[1,2,3,4],[1,2,3,4],[1,2,3,4],[1,2,3,4]]
+        //   Her iki matris de sıfır içermiyor — tüm skew basamakları dolu.
+        //   Beklenen: t=3'te a_in=b_in=32'h04030201 (tam dolu dalga)
+        // ============================================================
+        $display("--- Senaryo 4: Preset 3 (A=dongüsel, B=dongüsel) ---");
+        sw = 2'd3;
+
+        send_start;
+        check_ab(32'h00000001, 32'h00000001, 28); // t=0: A[0][0]=1, B[0][0]=1
+        @(posedge clk); #1;
+        check_ab(32'h00000201, 32'h00000201, 29); // t=1: A[0][1]=1,A[1][0]=2; B[1][0]=1,B[0][1]=2
+        @(posedge clk); #1;
+        check_ab(32'h00030201, 32'h00030201, 30); // t=2: A[2][0]=3,A[1][1]=2,A[0][2]=1; B simetrik
+        @(posedge clk); #1;
+        check_ab(32'h04030201, 32'h04030201, 31); // t=3: tüm 4 basamak dolu
+        @(posedge clk); #1;
+        check_ab(32'h04030200, 32'h04030200, 32); // t=4: A[1][3]=2,A[2][2]=3,A[3][1]=4
+        @(posedge clk); #1;
+        check_ab(32'h04030000, 32'h04030000, 33); // t=5: A[2][3]=3,A[3][2]=4
+        @(posedge clk); #1;
+        check_ab(32'h04000000, 32'h04000000, 34); // t=6: A[3][3]=4, B[3][3]=4
+
+        @(posedge clk); #1;
+        @(posedge clk); #1;
+        check_done_sig(1, 35);
+        @(posedge clk); #1;
+        check_done_sig(0, 36);
 
         // ============================================================
         // Sonuç
