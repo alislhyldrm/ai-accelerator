@@ -36,7 +36,7 @@ module systolic_array #(
         end
     endgenerate
 
-    // 4×4 PE ızgarası
+    // 4x4 PE ızgarası
     generate
         for (r = 0; r < N; r = r + 1) begin : row_gen
             for (c = 0; c < N; c = c + 1) begin : col_gen
