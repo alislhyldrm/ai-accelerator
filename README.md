@@ -14,6 +14,14 @@ A fully verified, FPGA-ready hardware matrix multiplier inspired by Google's TPU
 
 ## Architecture
 
+### Dataflow at a Glance
+
+![4×4 systolic-array dataflow: row r of A moves left-to-right, column c of B moves top-to-bottom, and PE[r,c] produces C[r,c].](docs/images/systolic-array-dataflow.png)
+
+Each processing element `PE[r,c]` owns one result, `C[r][c]`. It receives values from row `r` of matrix A and column `c` of matrix B, accumulating four products:
+
+`C[r][c] = Σ(k=0..3) A[r][k] × B[k][c]`
+
 ### How the Systolic Array Works
 
 Data flows through a grid of Processing Elements (PEs) like a wave. Matrix A enters from the left, matrix B from the top. Every PE performs one multiply-accumulate (MAC) per clock cycle and passes its operands to its right and bottom neighbors. No PE ever waits — the pipeline is always full.
