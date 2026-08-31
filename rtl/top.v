@@ -20,8 +20,8 @@
 module top (
     input  wire        clk,    // 100 MHz sistem saati
     input  wire        btnC,   // Merkez — senkron reset
-    input  wire        btnR,   // Sağ    — sel_reg artır
-    input  wire        btnL,   // Sol    — sel_reg azalt
+    input  wire        btnR,   // Sağ    — sel_reg artır, sonraki C sonucu
+    input  wire        btnL,   // Sol    — sel_reg azalt, önceki C sonucu
     input  wire        btnU,   // Yukarı — üst/alt 16-bit geçiş
     input  wire [3:0]  sw,     // sw[1:0]=preset seçici, sw[3:2] kullanılmıyor
     output wire [6:0]  seg,    // 7-segment sürücü (active-low)
@@ -54,6 +54,7 @@ module top (
 
     // -----------------------------------------------------------------
     // clk_div: 100 MHz → 1 kHz tick (seg7 çoğullama refresh'i)
+    // Bu modül 100 MHz clock’u display için uygun 1 kHz tick sinyaline dönüştürür.
     // -----------------------------------------------------------------
     wire tick;
     clk_div u_clk_div (
