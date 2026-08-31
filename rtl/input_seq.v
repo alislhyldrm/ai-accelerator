@@ -1,7 +1,8 @@
 `timescale 1ns/1ps
 
 // input_seq: Preset matris çiftini sistolic array'e skewed (dalgalanmalı) olarak besler.
-//
+// input_seq, sabit preset matrisleri 128-bit paketlerde saklıyor. Seçilen A ve B matrisinden gerekli 8-bit elemanları, cycle=0..6 boyunca dört paralel giriş hattına dağıtıyor. 
+//Böylece operandlar systolic array içinde doğru PE’ye aynı clock çevriminde ulaşıyor.”
 // Besleme şeması — 4×4 matris için 7 çevrim:
 //   a_in[r*8+:8] = A[r][t-r]   satır r,  t ∈ [r, r+3]
 //   b_in[c*8+:8] = B[t-c][c]   sütun c,  t ∈ [c, c+3]
@@ -81,7 +82,8 @@ module input_seq (
     // -----------------------------------------------------------------
     // FSM: IDLE → LOAD → DONE → IDLE
     // -----------------------------------------------------------------
-    always @(posedge clk) begin
+   // FSM
+    always @(posedge clk) begin  
         if (rst) begin
             state <= IDLE;
             cycle <= 3'd0;
@@ -126,6 +128,7 @@ module input_seq (
     // a_mat[(r*4+c)*8+:8] = A[r][c]   →  r*32 + c*8 bit ofseti
     // b_mat[(r*4+c)*8+:8] = B[r][c]   →  r*32 + c*8 bit ofseti
     // -----------------------------------------------------------------
+   //skewing kodu
     always @(*) begin
         a_in = 32'h0;
         b_in = 32'h0;
